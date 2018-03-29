@@ -1,9 +1,11 @@
 package com.bingo.neihan;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
-public class MainActivity extends AppCompatActivity {
+import com.bingo.neihan.app.base.BaseActivity;
+
+public class MainActivity extends BaseActivity
+{
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
