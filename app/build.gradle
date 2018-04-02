@@ -1,5 +1,12 @@
 apply plugin: 'com.android.application'
+apply plugin: 'walle'
 
+static def appName() {
+    return "neihan"
+}
+static def releaseTime() {
+    return new Date().format("yyyy-MM-dd", TimeZone.getDefault())
+}
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -17,12 +24,53 @@ android {
         versionName rootProject.ext.versionName
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
-    buildTypes {
+
+    Properties props = new Properties()
+    props.load(new FileInputStream(file("signing.properties")))
+    signingConfigs {
+        debug {
+            keyAlias props['KEY_ALIAS']
+            keyPassword props['KEY_PASSWORD']
+            storeFile file(props['KEYSTORE_FILE'])
+            storePassword props['KEYSTORE_PASSWORD']
+        }
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            keyAlias props['KEY_ALIAS']
+            keyPassword props['KEY_PASSWORD']
+            storeFile file(props['KEYSTORE_FILE'])
+            storePassword props['KEYSTORE_PASSWORD']
         }
     }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            applicationVariants.all { variant ->
+                variant.outputs.all { output ->
+                    def outputFile = output.outputFile
+                    if (outputFile != null && outputFile.name.endsWith('release.apk')) {
+                        def fileNames = "${appName()}_v${defaultConfig.versionName}_${defaultConfig.versionCode}_${releaseTime()}.apk"
+                        outputFileName = fileNames
+                    }
+                }
+            }
+        }
+    }
+
+    walle {
+        // 指定渠道包的输出路径
+        apkOutputFolder = new File("${project.buildDir}/outputs/channels");
+        // 定制渠道包的APK的文件名称
+        apkFileNameFormat = '${appName}-${packageName}-${channel}-${buildType}-v${versionName}-${versionCode}-${buildTime}.apk';
+        // 渠道配置文件
+        channelFile = new File("${project.getProjectDir()}/channel")
+    }
+
 }
 
 dependencies {
@@ -65,5 +113,5 @@ dependencies {
     implementation 'jp.wasabeef:glide-transformations:3.1.1'
     implementation 'pub.devrel:easypermissions:1.0.1'
     implementation 'com.jaeger.statusbarutil:library:1.4.0'
-
+    compile 'com.meituan.android.walle:library:1.1.6'
 }
